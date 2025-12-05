@@ -1,0 +1,13 @@
+[project]
+name = "Clinic_DataPlatform"
+version = "0.1.0"
+description = " builds a simple Star Schema data system for clinic info, loads data with SQL and Python, and makes a Power BI dashboard for key facts like patient numbers, money, and doctor work."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.3.3",
+    "psycopg2-binary>=2.9.11",
+    "pymssql>=2.3.10",
+    "python-dotenv>=1.2.1",
+    "sqlalchemy>=2.0.44",
+]

@@ -1,0 +1,66 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: clinic-sqlserver
+    ports:
+      - "1433:1433"
+    env_file:
+      - .env
+    volumes:
+      - ./mssql-data:/var/opt/mssql/data
+      - ./docker/ClinicDB.bk:/var/opt/mssql/backup/ClinicDB.bk:ro
+      - ./docker/restore-db.sh:/restore-db.sh:ro
+    command: >
+      sh -c "
+        /opt/mssql/bin/sqlservr &
+        /restore-db.sh
+        wait
+      "
+  postgres:
+    image: postgres:13
+    container_name: bi_postgres
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+
+  airflow:
+    build:
+      context: .
+      dockerfile: docker/Airflow.DockerFile
+    container_name: bi_airflow
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/data:/opt/airflow/data
+      - ./airflow/config:/opt/airflow/config
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./src:/opt/airflow/src
+    ports:
+      - "8080:8080"
+    command: standalone
+  superset:
+    init: true
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: bi_superset
+    volumes:
+      - superset:/app/superset_home
+    env_file:
+      - .env
+    ports:
+      - '8088:8088'
+
+
+
+volumes:
+  postgres_data:
+  superset:
