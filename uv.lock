@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.12"
 
 [[package]]
-name = "clinicdashboardproject"
+name = "clinic-dataplatform"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
@@ -11,6 +11,7 @@ dependencies = [
     { name = "psycopg2-binary" },
     { name = "pymssql" },
     { name = "python-dotenv" },
+    { name = "python-environ" },
     { name = "sqlalchemy" },
 ]
 
@@ -20,6 +21,7 @@ requires-dist = [
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pymssql", specifier = ">=2.3.10" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "python-environ", specifier = ">=0.4.54" },
     { name = "sqlalchemy", specifier = ">=2.0.44" },
 ]
 
@@ -265,6 +267,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/f0/26/19cadc79a718c5edb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/14/1b/a298b06749107c305e1fe0f814c6c74aea7b2f1e10989cb30f544a1b3253/python_dotenv-1.2.1-py3-none-any.whl", hash = "sha256:b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61", size = 21230, upload-time = "2025-10-26T15:12:09.109Z" },
 ]
+
+[[package]]
+name = "python-environ"
+version = "0.4.54"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/5d/8d4462fe29d3d3357eaac0f8321b7d0e77d0a4ea64505be1e6a90fba42dc/python-environ-0.4.54.tar.gz", hash = "sha256:6249a14057f95aba3b4906d73276f770e01e659f8098b3f3b34295feac42865b", size = 22947, upload-time = "2020-04-13T06:42:49.443Z" }
 
 [[package]]
 name = "pytz"

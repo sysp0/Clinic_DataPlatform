@@ -9,5 +9,6 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "pymssql>=2.3.10",
     "python-dotenv>=1.2.1",
+    "python-environ>=0.4.54",
     "sqlalchemy>=2.0.44",
 ]
