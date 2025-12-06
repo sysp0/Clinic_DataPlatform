@@ -1,5 +1,7 @@
 pandas
-sqlalchemy
+pandera
 psycopg2-binary
 pymssql
 python-dotenv
+python-environ
+sqlalchemy
