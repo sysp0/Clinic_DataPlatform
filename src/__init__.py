@@ -1,7 +1,5 @@
-from src import config, db, main
+from main import main as run
 
 __all__ = [
-    'config',
-    'db',
-    'main',
+    "run",
 ]
