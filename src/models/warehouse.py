@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String
+
 from src.db import WarehouseBase
 
 class DimDoctor(WarehouseBase):
@@ -14,8 +15,6 @@ class DimPatient(WarehouseBase):
     PatientID = Column(Integer, primary_key=True, comment="Original ID from Source")
     FullName = Column(String(255))
     Gender = Column(String(50), comment="Male/Female")
-    CityName = Column(String(100), comment="Derived from City table")
-    Age = Column(Integer, comment="Calculated during ETL")
 
 class DimService(WarehouseBase):
     __tablename__ = 'Dim_Service'
