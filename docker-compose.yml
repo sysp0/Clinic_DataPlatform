@@ -30,7 +30,7 @@ services:
   airflow:
     build:
       context: .
-      dockerfile: docker/Airflow.DockerFile
+      dockerfile: docker/Airflow.Dockerfile
     container_name: bi_airflow
     depends_on:
       - postgres
