@@ -12,10 +12,6 @@ def validate(model, query, engine):
         return df.drop(bad_idx) if bad_idx else df
 
 def shamsi_to_miladi(shamsi_date_str):
-    """
-    تبدیل تاریخ شمسی (string) به میلادی (datetime)
-    فرمت‌های پشتیبانی شده: '1402/09/15' یا '1402-09-15'
-    """
     if pd.isna(shamsi_date_str) or shamsi_date_str == '':
         return pd.NaT
     
