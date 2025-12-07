@@ -117,7 +117,7 @@ Superset:
 | سرویس    | آدرس                  | یوزر / پسورد        |
 | -------- | --------------------- | ------------------- |
 | Superset | http://localhost:8088 | admin / secret      |
-| Airflow  | http://localhost:8080 | airflow / docker exec -it bi_airflow cat simple_auth_manager_passwords.json.generated |
+| Airflow  | http://localhost:8080 | airflow / `docker exec -it bi_airflow cat simple_auth_manager_passwords.json.generated` |
 
 ---
 
