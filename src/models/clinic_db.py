@@ -38,7 +38,7 @@ class Patient(BaseSchema):
     NationalCode: str
     FirstName: str
     LastName: str
-    GenderTypeCode: int = pa.Field(ge=0)
+    GenderTypeCode: int = pa.Field(ge=1)
     Mobile: str
 
 class DoctorGroup(BaseSchema):
@@ -109,6 +109,7 @@ class PatientReceptionHeader(pa.DataFrameModel):
     PatientPK: Series[int] = pa.Field(nullable=True)
     DoctorPK: Series[int] = pa.Field(nullable=True)
     InsuranceTypeCode: Series[int] = pa.Field(nullable=True)
+    ReceptionDate_Shamsi: Series[str] = pa.Field(nullable=True)
     PatientAmount: Series[float] = pa.Field(nullable=True, coerce=True)
     InsuranceAmount: Series[float] = pa.Field(nullable=True, coerce=True)
     Discount: Series[float] = pa.Field(nullable=True, coerce=True)
