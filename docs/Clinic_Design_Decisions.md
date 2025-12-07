@@ -791,3 +791,231 @@ volumes:
  ✔ Container bi_postgres       Started                                           
 ```
 
+
+# مرحله اول - شروع توسعه
+اکنون که تمامی زیر ساخت رو برای توسعه آماده کردیم حالا میتوانیم یک ساختار اولیه برای پروژمون تعریف کنیم.
+
+## تعریف ساختار
+در این پروژه از ساختار `Src layout` میکنیم. مرحله اول ساختار پروژه رو مشخص میکنیم :
+
+```
+➜ tree src 
+src
+├── config.py
+├── db.py
+├── etl
+│   ├── extract.py
+│   ├── __init__.py
+│   ├── load.py
+│   └── transform.py
+├── __init__.py
+├── main.py
+└── models
+    ├── __init__.py
+    ├── source.py
+    └── warehouse.py
+```
+
+در این ساختار هر مفهومی رو در جای خودش قرار میدهیم. 
+
+قسمت `models` هارو داریم برای تعریف ORM پروژه مون که بتونم با زبان برنامه نویسی با دیتابیس صحبت کنیم. و برای هر یک از دیتابیس هامون جدول هارو تعریف میکنیم.
+
+> این کار رو کتابخونه `sqlalchemy` برامون انجام میده
+
+قسمت `etl` عملیات اصلی مون رو قرار میدیم. و اینجا از دیتابیس هدف میخونیم، دیتای خام رو بررسی میکنیم و دیتای پاک و تمیز رو داخل دیتابیس warehouse اضافه میکنیم.
+
+
+و داخل `config.py` تنظیمات پروژه مثل اطلاعات دیتابیس هارو قرار میدهیم. و همچنین فایل `db.py` رو هم میزاریم برای مدیریت اتصال به دیتابیس.
+
+> برای انجام این  عملیات، یادگیری و نحوه پیاده سازی از این [ریپو](https://github.com/hnawaz007/pythondataanalysis/tree/main/ETL%20Pipeline) ایده گرفته شده است که دقیقا همین کار رو توضیح داده است
+> و همچنین [ویدیو](https://www.youtube.com/watch?v=dfouoh9QdUw) برای توضیحات این ریپو هم موجود هست
+
+
+## تعریف model ها
+بعد از اینکه ساختار پروژه رو مشخص کردیم حالا باید بریم که جدول هارو با استفاده از `sqlalchemy` جداول مورد نظرمون رو داخل پایتون مدل سازی کنیم. 
+
+هدف این کار این هستش که ما از قابلیت ORM استفاده کنیم و بتونیم کد های پایتونی بزنیم و `sqlalchemy` برامون تبدیل به SQL بکنه.
+
+برای هر نوع دیتابیس مون یک فایل قرار میدیم چون جدول های متفاوتی دارند. 
+
+زمانی که دیتابیس هامون رو با استفاده از `sqlalchemy` مدل سازی کردیم حالا باید فایل `db.py` مون رو توسعه بدیم تا بتوانیم یک شئ از دیتابیس بسازیم که برای ارتباط با دیتابیس از این شئ استفاده کنیم:
+
+```python
+# Source (MSSQL)
+source_engine = create_engine(url=Config.SOURCE_CONN_STRING, echo=False)
+SourceSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=source_engine)
+SourceBase = declarative_base()
+
+@contextmanager
+def source_session():
+    db = SourceSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+```
+
+با استفاده از این فانکشن `contextmanager` میتونیم از طریق `with` دیتابیس مون رو مدیریت کنیم. این کار به این دلیل انجام شده است تا زمانی که کارمون با دیتابیس تموم شد ارتباط ما `close` بشود.
+
+و حالا باید یک تست بگیریم ببینیم میتوانیم دیتا رو بخونیم یا نه :
+
+```python
+from src.db import source_session
+from src.models.source import Province
+
+def main():
+    with source_session() as db:
+        for p in db.query(Province).all():
+            print(p.ProvinceCode, p.ProvinceName)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+
+این دیتابیس مبدا (MsSQL) مون هستش.
+
+و فایل پایتون رو اجرا میکنیم:
+
+```bash
+$ python main.py
+0 نامعلوم
+1 آذربايجان شرقی
+2 آذربایجان غربی
+...
+```
+
+
+## ایجاد ساختار دیتابیس هدف 
+ما بعد از اینکه دیتابیس هدف مون که Warehouse هستش رو مدل سازی کردیم چون این دیتابیس  خالی هستش باید عملیات `migrate` رو انجام دهیم تا جدول هایی که مدل سازی کردیم ساخته شود:
+
+یک فایل `manage.py` مینویسیم که در ورودی براش مشخص کنیم که عملیات `migrate` رو برای دیتابیس Warehouse ما انجام بدهد:
+
+```python
+from sqlalchemy import text
+import sys
+from src.db import init_warehouse_db, warehouse_engine
+
+def migrate():
+    """Create all warehouse tables."""
+    print("Running migrations...")
+    init_warehouse_db()
+    print("Done!")
+
+def check_connections():
+    """Test database connections."""
+    print("Checking Warehouse DB connection...")
+    try:
+        with warehouse_engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        print("Warehouse DB: OK")
+    except Exception as e:
+        print(f"Warehouse DB: FAILED - {e}")
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python manage.py [migrate|check]")
+        return
+    
+    command = sys.argv[1]
+    
+    if command == "migrate":
+        migrate()
+    elif command == "check":
+        check_connections()
+    else:
+        print(f"Unknown command: {command}")
+
+if __name__ == "__main__":
+    main()
+```
+
+با این کار ما میتوانیم دستور زیر رو وارد کنیم و جدول های دیتابیس ساخته شود:
+
+```bash
+python manage.py migrate 
+Running migrations...
+Models found in metadata: dict_keys(['Dim_Doctor', 'Dim_Patient', 'Dim_Service', 'Dim_Insurance', 'Fact_Reception'])
+Warehouse tables created successfully.
+Done!
+```
+
+حالا میتونیم بریم روی دیتابیس مون و مشاهده کنیم که جدول ها ساخته شده اند:
+
+```bash
+docker exec -it bi_postgres psql -U admin -d warehouse_db
+
+warehouse_db=# \d
+List of relations
+ Schema |             Name              |   Type   | Owner 
+--------+-------------------------------+----------+-------
+ public | Dim_Doctor                    | table    | admin
+ public | Dim_Doctor_DoctorID_seq       | sequence | admin
+ public | Dim_Insurance                 | table    | admin
+ public | Dim_Insurance_InsuranceID_seq | sequence | admin
+ public | Dim_Patient                   | table    | admin
+ public | Dim_Patient_PatientID_seq     | sequence | admin
+ public | Dim_Service                   | table    | admin
+ public | Dim_Service_ServiceID_seq     | sequence | admin
+ public | Fact_Reception                | table    | admin
+ public | Fact_Reception_FactID_seq     | sequence | admin
+(10 rows)
+```
+
+تمامی دیتابیس های مورد نظر ساخته شدند.
+
+## تعریف ساختار ETL
+بعد تمامی عملیاتی که ما انجام دادیم باید بریم روند **extract, transform, load** رو با استفاده از پایتون پیاده سازی بکنیم.
+
+### پیاده سازی `extract`
+در مرحله اول از قسمت `extract` شروع میکنیم، در این مرحله ما باید بتوانیم تمامی دیتای مورد نظرمون که داخل دیتابیس قرار دارد رو بخونیم و برای مرحله بعدی آماده شون کنیم.
+
+در این مرحله هدف فقط بیرون کشیدن دیتا از دیتابیس هستش.
+
+ما داخل فایل `etl/extract.py` کلاس مورد نظرمون رو توسعه میدیم تا دیتا رو از دیتابیس بخونه و تبدیل کنه به ساختاری مشابه جداول دیتابیس که باعث میشود عملیات خوندن، تمیز کردن و آپدیت کردن دیتا خیلی راحت انجام شود.
+
+دلیل سرعت بالای `pandas` به این دلیل هست که داده‌ها را از دیتابیس می‌گیرد و در رم بارگذاری می‌کند.
+
+حالا باید کلاس مورد نظرمون رو با استفاده از این ساختار توسعه بدهیم:
+
+```python
+import pandas as pd
+from sqlalchemy.orm import Session
+from typing import Dict
+from sqlalchemy import inspect
+
+class SourceExtractor:
+    def __init__(self, session: Session):
+        self.session = session
+        self.engine = session.bind
+
+    def get_target_tables(self) -> list[str]:
+        inspector = inspect(self.engine)
+        return inspector.get_table_names()
+
+    def extract(self) -> Dict[str, pd.DataFrame]:
+        extracted_data = {}
+        tables_to_extract = self.get_target_tables()
+        for table_name in tables_to_extract:
+            print(f"Extracting table: {table_name}...", end=" ")
+            df = pd.read_sql_table(
+                table_name, 
+                self.session.connection()
+            )
+            extracted_data[table_name] = df
+            print(f"Done. Rows: {len(df)}")
+        return extracted_data
+```
+
+ما در اینجا با استفاده از اون `session` که برای دیتابیس ایجاد کردیم میتوانیم به دیتابیس مون متصل بشیم و جدول هارو بخونیم.
+
+و روی تمامی جدول ها حرکت کنیم و با استفاده از کد زیر:
+
+```python
+df = pd.read_sql_table(
+	table_name, 
+	self.session.connection()
+)
+```
+
