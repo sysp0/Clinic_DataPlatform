@@ -1,4 +1,4 @@
-from src.utils import validate
+from src.utils import shamsi_to_miladi, validate
 from src.models.data import ExtractedData, TransformedData
 
 
@@ -48,6 +48,9 @@ def transform(data: ExtractedData) -> TransformedData:
     
     # FactReception
     fact = data.detail.merge(data.header, on="PatientReceptionHeaderPK", how="inner")
+    
+    fact["ReceptionDate"] = fact["ReceptionDate_Shamsi"].apply(shamsi_to_miladi)
+    
     fact_reception = fact.rename(
         columns={
             "DoctorPK": "DoctorID",
